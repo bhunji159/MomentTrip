@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MomentTrip"
 include(":app")
+ 
