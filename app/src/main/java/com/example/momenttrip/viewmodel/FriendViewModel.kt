@@ -1,5 +1,6 @@
 package com.example.momenttrip.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.momenttrip.data.FriendRequest
@@ -97,7 +98,8 @@ class FriendViewModel: ViewModel() {
             if (result.isSuccess) {
                 _friendList.value = result.getOrNull() ?: emptyList()
             } else {
-                // 에러 로깅 또는 처리
+                val errorMessage = result.exceptionOrNull()?.message ?: "친구 목록을 불러오는 중 오류가 발생했습니다."
+                Log.e("FriendViewModel", "loadFriendList 실패: $errorMessage")
             }
         }
     }

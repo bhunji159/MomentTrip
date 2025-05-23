@@ -9,5 +9,6 @@ data class ExpenseEntry(
     val detail: String? = null,
     val amount: Double = 0.0,
     val category: String = "",     // 예: 식비, 교통비 등
-    val currency: String = "KRW"   // 예: KRW, USD 등
+    val currency: String = "KRW",  // 예: KRW, USD 등
+    val paymentType: String = "카드"
 )
