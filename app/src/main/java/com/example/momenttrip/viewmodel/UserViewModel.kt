@@ -167,4 +167,20 @@ class UserViewModel:ViewModel(){
                 .update("current_trip_id", tripId) // tripId가 null이면 제거됨
         }
     }
+
+    fun fetchCurrentTripStatus(onResult: (Boolean) -> Unit) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return onResult(false)
+
+        FirebaseFirestore.getInstance().collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                val currentTripId = doc.getString("current_trip_id")
+                onResult(!currentTripId.isNullOrBlank())
+            }
+            .addOnFailureListener {
+                onResult(false)
+            }
+    }
+
 }

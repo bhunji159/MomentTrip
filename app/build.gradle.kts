@@ -49,6 +49,7 @@ dependencies {
     implementation ("com.googlecode.libphonenumber:libphonenumber:8.13.23")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.compose.material3:material3:1.2.0")
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.ktx)
