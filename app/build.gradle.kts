@@ -43,7 +43,7 @@ android {
 dependencies {
 
     implementation("com.google.firebase:firebase-auth:23.2.0")
-    implementation("com.google.android.gms:play-services-auth")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation ("com.googlecode.libphonenumber:libphonenumber:8.13.23")

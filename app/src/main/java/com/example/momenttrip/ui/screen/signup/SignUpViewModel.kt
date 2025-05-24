@@ -27,12 +27,6 @@ class SignUpViewModel : ViewModel() {
                 .addOnSuccessListener { result ->
                     val uid = result.user?.uid ?: return@addOnSuccessListener
 
-                    val searchKey = listOf(
-                        email.lowercase(),
-                        nickname.trim(),
-                        phoneNumber.trim()
-                    )
-
                     val user = hashMapOf(
                         "email" to email,
                         "login_type" to "email",
@@ -42,7 +36,7 @@ class SignUpViewModel : ViewModel() {
                         "profile_url" to "",
                         "created_at" to Date(),
                         "current_trip_id" to null,
-                        "search_key" to searchKey,
+                        "search_key" to listOf(email.lowercase(), nickname.trim(), phoneNumber.trim()),
                         "friends" to emptyList<String>(),
                         "friend_request_ids" to emptyList<String>(),
                         "trip_invite_ids" to emptyList<String>()
@@ -52,16 +46,22 @@ class SignUpViewModel : ViewModel() {
                         .document(uid)
                         .set(user)
                         .addOnSuccessListener {
-                            onSuccess()
+                            // 🔥 자동 로그인 처리
+                            auth.signInWithEmailAndPassword(email, password)
+                                .addOnSuccessListener {
+                                    onSuccess()
+                                }
+                                .addOnFailureListener { e ->
+                                    onError("자동 로그인 실패: ${e.message}")
+                                }
                         }
                         .addOnFailureListener { e ->
-                            Log.e("SignUp", "Firestore 저장 실패", e)
-                            onError("데이터 저장 실패: ${e.message}")
+                            onError("Firestore 저장 실패: ${e.message}")
                         }
 
                 }
                 .addOnFailureListener { e ->
-                    Log.e("SignUp", "회원가입 실패", e)
+                    Log.e("SignUpViewModel", "회원가입 실패", e)
                     onError("회원가입 실패: ${e.message}")
                 }
         }

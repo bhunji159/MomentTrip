@@ -10,9 +10,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.momenttrip" />
-                  <option name="mobileSdkAppId" value="1:523651179316:android:c1337886e1a6e5a2b03b61" />
-                  <option name="projectId" value="momenttrip-316a9" />
-                  <option name="projectNumber" value="523651179316" />
+                  <option name="mobileSdkAppId" value="1:703473482799:android:09b56e72e71d72a84a1ada" />
+                  <option name="projectId" value="momenttrip-918e4" />
+                  <option name="projectNumber" value="703473482799" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

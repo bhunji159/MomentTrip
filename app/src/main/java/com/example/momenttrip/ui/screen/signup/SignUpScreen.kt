@@ -1,113 +1,128 @@
 package com.example.momenttrip.ui.screen.signup
 
-import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 
-
 @Composable
 fun SignUpScreen(
-    onSignUpSuccess: () -> Unit,
-    viewModel: SignUpViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    email: String,
+    password: String,
+    confirmPassword: String,
+    name: String,
+    nickname: String,
+    phoneNumber: String,
+    errorMessage: String,
+    emailCheckMessage: String,
+    nicknameCheckMessage: String,
+    phoneCheckMessage: String,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onConfirmPasswordChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
+    onNicknameChange: (String) -> Unit,
+    onPhoneNumberChange: (String) -> Unit,
+    onSignUpClick: () -> Unit
 ) {
-    val context = LocalContext.current
-
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var nickname by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState()) // 스크롤 가능하게!
+            .imePadding(), // 키보드가 올라올 때 여백 확보
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("이메일") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
 
         OutlinedTextField(
+            value = email,
+            onValueChange = onEmailChange,
+            label = { Text("이메일") },
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (emailCheckMessage.isNotEmpty()) {
+            Text(
+                text = emailCheckMessage,
+                color = if (emailCheckMessage.contains("가능")) Color.Green else Color.Red,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = onPasswordChange,
             label = { Text("비밀번호") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
             value = confirmPassword,
-            onValueChange = { confirmPassword = it },
+            onValueChange = onConfirmPasswordChange,
             label = { Text("비밀번호 확인") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = onNameChange,
             label = { Text("이름") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-
         OutlinedTextField(
             value = nickname,
-            onValueChange = { nickname = it },
+            onValueChange = onNicknameChange,
             label = { Text("닉네임") },
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        if (nicknameCheckMessage.isNotEmpty()) {
+            Text(
+                text = nicknameCheckMessage,
+                color = if (nicknameCheckMessage.contains("가능")) Color.Green else Color.Red,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = phoneNumber,
-            onValueChange = { phoneNumber = it },
+            onValueChange = onPhoneNumberChange,
             label = { Text("전화번호") },
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        if (phoneCheckMessage.isNotEmpty()) {
+            Text(
+                text = phoneCheckMessage,
+                color = if (phoneCheckMessage.contains("등록")) Color.Red else Color.Green,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = {
-                if (password != confirmPassword) {
-                    Toast.makeText(context, "비밀번호가 일치하지 않습니다", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-                viewModel.signUp(
-                    email, password, name, nickname, phoneNumber,
-                    onSuccess = onSignUpSuccess,
-                    onError = { message ->
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                    }
-                )
-            },
+            onClick = onSignUpClick,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("회원가입")
