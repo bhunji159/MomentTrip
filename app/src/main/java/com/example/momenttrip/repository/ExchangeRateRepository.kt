@@ -1,6 +1,7 @@
 package com.example.momenttrip.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.momenttrip.api.ExchangeRateService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
