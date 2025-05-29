@@ -73,7 +73,16 @@ fun ExpenseScreen(
             Text("$date (DAY $dayIndex)", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = "지출 합계")
+            val totalAmountInKRW = expenses.sumOf {
+                val rate = exchangeRate[it.currency]
+                if (rate != null && rate > 0) it.amount * rate else 0.0
+            }
+
+            Text(
+                text = "지출 총합: ${"%,.0f".format(totalAmountInKRW)} KRW",
+                style = MaterialTheme.typography.titleMedium
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn {
@@ -157,7 +166,6 @@ fun ExpenseScreen(
 
                                     Text(formattedTimeText)
                                     Text("${entry.title} [${entry.category}]")
-//                                    Text("결제수단: ${entry.paymentType}")
                                 }
 
                                 Column(horizontalAlignment = Alignment.End) {
