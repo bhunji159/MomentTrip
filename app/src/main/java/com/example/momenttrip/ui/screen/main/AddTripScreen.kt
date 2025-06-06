@@ -7,14 +7,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.momenttrip.repository.UserRepository
 import com.example.momenttrip.ui.component.CountryBottomSheet
+import com.example.momenttrip.ui.component.DateBottomSheet
+import com.example.momenttrip.viewmodel.TripViewModel
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 @Composable
 fun AddTripScreen(
-    onLogout: () -> Unit
+    viewModel: TripViewModel,
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     val tripName = remember { mutableStateOf("") }
     val selectedCountries = remember { mutableStateOf<List<String>>(emptyList()) }
@@ -23,17 +32,52 @@ fun AddTripScreen(
     val showCountrySheet = remember { mutableStateOf(false) }
     val showDateSheet = remember { mutableStateOf(false) }
 
+    val isCreating = remember { mutableStateOf(false) }
+
     Scaffold(
         bottomBar = {
             Button(
                 onClick = {
-                    if (tripName.value.isBlank() || selectedCountries.value.isEmpty() || selectedDates.value.first == null) {
+                    if (isCreating.value) return@Button
+
+                    if (tripName.value.isBlank() ||
+                        selectedCountries.value.isEmpty() ||
+                        selectedDates.value.first == null ||
+                        selectedDates.value.second == null
+                    ) {
                         Toast.makeText(context, "모든 항목을 입력하세요", Toast.LENGTH_SHORT).show()
                     } else {
-                        // 여행 생성 처리
-                        Toast.makeText(context, "여행 생성 완료!", Toast.LENGTH_SHORT).show()
+                        val uid = FirebaseAuth.getInstance().currentUser?.uid
+                        if (uid != null) {
+                            isCreating.value = true
+
+                            viewModel.createTrip(
+                                ownerUid = uid,
+                                title = tripName.value,
+                                startDate = selectedDates.value.first!!,
+                                endDate = selectedDates.value.second!!,
+                                countries = selectedCountries.value
+                            ) { tripId ->
+                                coroutineScope.launch {
+                                    UserRepository.updateCurrentTripId(uid, tripId)
+                                    delay(500)
+                                    viewModel.loadCurrentTrip(tripId)
+
+                                    // ✅ tripState가 null이 아닌 최초 값이 나올 때까지 기다림
+                                    viewModel.currentTrip
+                                        .filterNotNull()
+                                        .first()
+
+                                    Toast.makeText(context, "여행 생성 완료!", Toast.LENGTH_SHORT).show()
+                                    isCreating.value = false
+
+                                }
+                            }
+
+                        }
                     }
                 },
+                enabled = !isCreating.value,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
@@ -55,14 +99,13 @@ fun AddTripScreen(
                 value = tripName.value,
                 onValueChange = { tripName.value = it },
                 label = { Text("여행 이름") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             Text("여행 조건", style = MaterialTheme.typography.titleMedium)
 
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text("나라 선택", style = MaterialTheme.typography.bodyMedium)
                     Spacer(Modifier.height(8.dp))
@@ -88,7 +131,7 @@ fun AddTripScreen(
                         val (start, end) = selectedDates.value
                         Text(
                             text = if (start != null && end != null)
-                                "${start} ~ ${end}"
+                                "$start ~ $end"
                             else "날짜를 선택하세요"
                         )
                     }
@@ -106,7 +149,14 @@ fun AddTripScreen(
             )
         }
 
-        // DateBottomSheet도 여기에 연동 예정
+        if (showDateSheet.value) {
+            DateBottomSheet(
+                onDismiss = { showDateSheet.value = false },
+                onDateSelected = { start, end ->
+                    selectedDates.value = start to end
+                    showDateSheet.value = false
+                }
+            )
+        }
     }
 }
-

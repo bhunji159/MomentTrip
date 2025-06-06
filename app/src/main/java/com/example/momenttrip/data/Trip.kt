@@ -1,9 +1,10 @@
 package com.example.momenttrip.data
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Exclude
 
 data class Trip(
-    val trip_id: String? = null,
+    @get:Exclude val trip_id: String = "",
     val owner_uid: String = "",
     val title: String = "",
     val start_date: Timestamp = Timestamp.now(),

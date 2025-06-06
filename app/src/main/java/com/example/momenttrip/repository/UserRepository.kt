@@ -17,6 +17,9 @@ object UserRepository{
     suspend fun getCurrentUser(): User? {
         val uid = auth.currentUser?.uid ?: return null
         val snapshot = db.collection("users").document(uid).get().await()
+        Log.d("UserRepository", "snapshot data: ${snapshot.data}")
+        val user = snapshot.toObject(User::class.java)
+        Log.d("UserRepository", "parsed user: $user")
         return snapshot.toObject(User::class.java)?.copy(uid = uid)
     }
 
@@ -177,6 +180,42 @@ object UserRepository{
             Result.success(Unit)
         }
     }
+    //여행 종료 로직
+    suspend fun finishTrip(userId: String, tripId: String): Result<Unit> {
+        return try {
+            val userRef = db.collection("users").document(userId)
 
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(userRef)
+
+                val rawList = snapshot.get("past_trips")
+                val pastTrips = if (rawList is List<*>) {
+                    rawList.filterIsInstance<String>()
+                } else {
+                    emptyList()
+                }
+
+                if (!pastTrips.contains(tripId)) {
+                    val updatedTrips = pastTrips + tripId
+                    transaction.update(userRef, mapOf(
+                        "past_trips" to updatedTrips,
+                        "current_trip_id" to null
+                    ))
+                } else {
+                    transaction.update(userRef, "current_trip_id", null)
+                }
+            }.await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun updateCurrentTripId(userId: String, tripId: String) {
+        db.collection("users")
+            .document(userId)
+            .update("current_trip_id", tripId)
+            .await()
+    }
 
 }

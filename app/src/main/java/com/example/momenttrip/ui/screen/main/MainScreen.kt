@@ -2,20 +2,27 @@ package com.example.momenttrip.ui.screen.main
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.momenttrip.ui.screen.settings.SettingsScreen
+import com.example.momenttrip.viewmodel.TripViewModel
 
 @Composable
 fun MainScreen(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    centerTab: String,
+    onAddScheduleClick: () -> Unit,
+    tripViewModel: TripViewModel
 ) {
-    val selectedTab = remember { mutableStateOf("home") }
+    val selectedTab = remember { mutableStateOf("center") }
+    val tripState by tripViewModel.currentTrip.collectAsState()
+    val isTripLoading by tripViewModel.isTripLoading.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -27,10 +34,10 @@ fun MainScreen(
                     label = { Text("친구") }
                 )
                 NavigationBarItem(
-                    selected = selectedTab.value == "home",
-                    onClick = { selectedTab.value = "home" },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "홈") },
-                    label = { Text("홈") }
+                    selected = selectedTab.value == "center",
+                    onClick = { selectedTab.value = "center" },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "여행") },
+                    label = { Text("여행") }
                 )
                 NavigationBarItem(
                     selected = selectedTab.value == "settings",
@@ -41,16 +48,46 @@ fun MainScreen(
             }
         }
     ) { padding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
             when (selectedTab.value) {
-                "home" -> AddTripScreen(onLogout = onLogout)
-                else -> PlaceholderScreen(selectedTab.value)
+                "friends" -> PlaceholderScreen("친구")
+                "center" -> {
+                    when (centerTab) {
+                        "addTrip" -> AddTripScreen( viewModel = tripViewModel,)
+                        "currentTrip" -> {
+                            when {
+                                isTripLoading -> {
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                                tripState != null -> {
+                                    CurrentTripScreen(
+                                        tripViewModel = tripViewModel,
+                                        onAddScheduleClick = onAddScheduleClick
+                                    )
+                                }
+                                else -> {
+                                    PlaceholderScreen("여행 정보 없음")
+                                }
+                            }
+                        }
+
+                        else -> PlaceholderScreen("잘못된 centerTab: $centerTab")
+                    }
+                }
+                "settings" -> SettingsScreen(onLogout = onLogout)
             }
         }
     }
 }
+
+
+
 
 @Composable
 fun PlaceholderScreen(name: String) {

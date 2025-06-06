@@ -1,6 +1,7 @@
 package com.example.momenttrip.viewmodel
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.momenttrip.data.Trip
@@ -24,6 +25,16 @@ class UserViewModel:ViewModel(){
             _user.value = UserRepository.getCurrentUser()
         }
     }
+    //여행 종료 로직
+    fun endCurrentTrip(userId: String, tripId: String) {
+        viewModelScope.launch {
+            val result = UserRepository.finishTrip(userId, tripId)
+            result.onFailure {
+                Log.e("UserViewModel", "여행 종료 실패: ${it.message}")
+            }
+        }
+    }
+
 
     //회원가입
     fun registerUser(

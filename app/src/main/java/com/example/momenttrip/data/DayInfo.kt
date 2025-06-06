@@ -1,3 +1,8 @@
 package com.example.momenttrip.data
 
-data class DayInfo()
+import java.time.LocalDate
+
+data class DayInfo(
+    val date: LocalDate,
+    val isSelected: Boolean = false
+)
