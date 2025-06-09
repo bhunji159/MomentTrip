@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.secrets.gradle.plugin)
     id("com.google.gms.google-services")
 }
 
@@ -40,6 +41,11 @@ android {
     }
 }
 
+secrets {
+    propertiesFileName = "secrets.properties"
+    defaultPropertiesFileName = "local.defaults.properties"
+}
+
 dependencies {
 
     implementation("com.google.firebase:firebase-auth:23.2.0")
@@ -50,8 +56,12 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.24.13-rc")
 
-    implementation(libs.androidx.navigation.compose)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    implementation("androidx.navigation:navigation-compose:2.4.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,10 +70,17 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.storage.ktx)
-    testImplementation(libs.junit)
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.firebase:firebase-auth-ktx:21.0.1")
+    implementation("com.google.firebase:firebase-database-ktx:20.0.3")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.0.3")
+    implementation("com.google.firebase:firebase-storage-ktx:20.0.0")
+    implementation("androidx.compose.material3:material3:1.0.0")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.0.0")
+    implementation("com.naver.maps:map-sdk:3.21.0")
+    implementation("io.github.fornewid:naver-map-compose:1.8.0")
+
+    implementation(libs.naver.map.compose)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

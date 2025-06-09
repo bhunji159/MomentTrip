@@ -12,7 +12,20 @@
           "package_name": "com.example.momenttrip"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "703473482799-qffkj975bgqvj8ls2k76ethujd6059ge.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.momenttrip",
+            "certificate_hash": "0970659cbbccdbd49986cf17a4dc2c64a24fd025"
+          }
+        },
+        {
+          "client_id": "703473482799-fmtbuhjg8lifc00m69nni5tmkfcpketc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCGhKuyZbsNNNnHtIuNB6-XCnV7szNXE7I"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "703473482799-fmtbuhjg8lifc00m69nni5tmkfcpketc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
