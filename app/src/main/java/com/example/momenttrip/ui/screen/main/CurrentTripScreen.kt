@@ -28,7 +28,9 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun CurrentTripScreen(
     tripViewModel: TripViewModel = viewModel(),
-    onAddScheduleClick: () -> Unit
+    onAddScheduleClick: () -> Unit,
+    onEditScheduleClick: (SchedulePlan) -> Unit
+
 ) {
     val tripState by tripViewModel.currentTrip.collectAsState()
     val isLoading by tripViewModel.isTripLoading.collectAsState()
@@ -38,6 +40,8 @@ fun CurrentTripScreen(
 
     var showDetailDialog by remember { mutableStateOf(false) }
     var selectedSchedule by remember { mutableStateOf<SchedulePlan?>(null) }
+
+    var deleteTarget by remember { mutableStateOf<SchedulePlan?>(null) }
     val firstUpcomingTime = schedulesForDate
         .filter {
             val start = LocalTime.parse(it.start_time)
@@ -123,13 +127,43 @@ fun CurrentTripScreen(
                         onDetailClick = { schedule ->
                             selectedSchedule = schedule
                             showDetailDialog = true
+                        },
+                        onDelete = { plan ->
+                            deleteTarget = plan
                         }
                     )
+                    if (deleteTarget != null) {
+                        AlertDialog(
+                            onDismissRequest = { deleteTarget = null },
+                            title = { Text("일정 삭제") },
+                            text = { Text("정말로 이 일정을 삭제하시겠습니까?") },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        tripViewModel.deleteSchedulePlan(
+                                            schedule = deleteTarget!!,
+                                            tripId = tripState!!.trip_id,
+                                            date = selectedDate
+                                        ) { /* 필요시 토스트 등 */ }
+                                        deleteTarget = null
+                                    }
+                                ) { Text("삭제") }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = { deleteTarget = null }
+                                ) { Text("취소") }
+                            }
+                        )
+                    }
                     if (showDetailDialog && selectedSchedule != null) {
                         ScheduleDetailDialog(
                             schedule = selectedSchedule!!,
                             onDismiss = { showDetailDialog = false },
-                            onEditClick = { /* 수정 화면 이동 로직 */ }
+                            onEditClick = {
+                                onEditScheduleClick(selectedSchedule!!)
+                                showDetailDialog = false
+                            }
                         )
                     }
                 }

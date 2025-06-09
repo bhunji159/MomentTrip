@@ -129,6 +129,54 @@ class TripViewModel : ViewModel() {
             _isTripLoading.value = false
         }
     }
+    fun updateSchedulePlan(
+        editingSchedule: SchedulePlan,
+        tripId: String,
+        date: LocalDate,
+        title: String,
+        content: String,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        authorUid: String,
+        onComplete: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = TripRepository.updateSchedulePlan(
+                tripId = tripId,
+                date = date,
+                planId = editingSchedule.documentId, // 문서 ID로 접근!
+                title = title,
+                content = content,
+                startTime = startTime,
+                endTime = endTime,
+                authorUid = authorUid
+            )
+            if (result.isSuccess) {
+                _currentLoadedDate.value = null
+                loadSchedulePlans(tripId, date)
+            }
+            onComplete(result.isSuccess)
+        }
+    }
 
+    fun deleteSchedulePlan(
+        schedule: SchedulePlan,
+        tripId: String,
+        date: LocalDate,
+        onComplete: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = TripRepository.deleteSchedulePlan(
+                tripId = tripId,
+                date = date,
+                planId = schedule.documentId
+            )
+            if (result.isSuccess) {
+                _currentLoadedDate.value = null
+                loadSchedulePlans(tripId, date)
+            }
+            onComplete(result.isSuccess)
+        }
+    }
 
 }

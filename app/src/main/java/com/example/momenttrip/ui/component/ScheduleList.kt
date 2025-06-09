@@ -8,18 +8,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.example.momenttrip.R
 import com.example.momenttrip.data.SchedulePlan
+
 
 @Composable
 fun ScheduleList(
     schedulesForDate: List<SchedulePlan>,
     firstUpcomingTime: SchedulePlan?,  // 현재 시간 이후 첫 일정
-    onDetailClick: (SchedulePlan) -> Unit = {}
+    onDetailClick: (SchedulePlan) -> Unit = {},
+    onDelete: (SchedulePlan) -> Unit = {}
 ) {
     if (schedulesForDate.isEmpty()) {
         Text(
@@ -75,6 +81,17 @@ fun ScheduleList(
                                 .clickable { onDetailClick(plan) }
                                 .padding(all = 8.dp)
                         )
+
+                        IconButton(
+                            onClick = { onDelete(plan) }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.baseline_delete_24),
+                                contentDescription = "삭제",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+
                     }
                 }
             }

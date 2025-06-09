@@ -1,6 +1,7 @@
 package com.example.momenttrip.data
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Exclude
 
 data class SchedulePlan(
     val title: String = "",
@@ -9,6 +10,6 @@ data class SchedulePlan(
     val end_time: String = "",
     val author_uid: String = "",
     val created_at: Timestamp = Timestamp.now(),
-    val documentId: String = ""    // 추가!
+    @get:Exclude val documentId: String = ""    // 추가!
 
 )

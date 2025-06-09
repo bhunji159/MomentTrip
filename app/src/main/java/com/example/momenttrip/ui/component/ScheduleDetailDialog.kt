@@ -12,8 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.momenttrip.data.SchedulePlan
 
-
-
 @Composable
 fun ScheduleDetailDialog(
     schedule: SchedulePlan,

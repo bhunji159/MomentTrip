@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.ui.screen.settings.SettingsScreen
 import com.example.momenttrip.viewmodel.TripViewModel
 
@@ -18,6 +19,7 @@ fun MainScreen(
     onLogout: () -> Unit,
     centerTab: String,
     onAddScheduleClick: () -> Unit,
+    onEditScheduleClick : (SchedulePlan)->Unit,
     tripViewModel: TripViewModel
 ) {
     val selectedTab = remember { mutableStateOf("center") }
@@ -68,7 +70,8 @@ fun MainScreen(
                                 tripState != null -> {
                                     CurrentTripScreen(
                                         tripViewModel = tripViewModel,
-                                        onAddScheduleClick = onAddScheduleClick
+                                        onAddScheduleClick = onAddScheduleClick,
+                                        onEditScheduleClick = onEditScheduleClick
                                     )
                                 }
                                 else -> {

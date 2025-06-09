@@ -78,7 +78,8 @@ fun SignUpEntryPoint(
                     }
                 }
             )
-        }
+        },
+        onBack = onCancel
     )
 }
 

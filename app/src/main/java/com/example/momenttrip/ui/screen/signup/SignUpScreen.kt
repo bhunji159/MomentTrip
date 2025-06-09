@@ -1,5 +1,6 @@
 package com.example.momenttrip.ui.screen.signup
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,8 +32,10 @@ fun SignUpScreen(
     onNameChange: (String) -> Unit,
     onNicknameChange: (String) -> Unit,
     onPhoneNumberChange: (String) -> Unit,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    onBack: () -> Unit
 ) {
+    BackHandler(onBack = onBack)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -126,6 +129,12 @@ fun SignUpScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("회원가입")
+        }
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("뒤로가기")
         }
     }
 }

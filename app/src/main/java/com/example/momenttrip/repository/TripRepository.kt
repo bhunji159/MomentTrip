@@ -189,6 +189,7 @@ object TripRepository {
             Result.failure(e)
         }
     }
+
     suspend fun getSchedulePlans(tripId: String, date: LocalDate): List<SchedulePlan> {
         val dateStr = date.format(DateTimeFormatter.ISO_DATE)
         return try {
@@ -199,12 +200,66 @@ object TripRepository {
                 .collection("plans")
                 .get()
                 .await()
-            snapshot.documents.mapNotNull { it.toObject(SchedulePlan::class.java) }
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(SchedulePlan::class.java)?.copy(documentId = doc.id)
+            }
         } catch (e: Exception) {
             emptyList()
         }
     }
 
+    suspend fun updateSchedulePlan(
+        tripId: String,
+        date: LocalDate,
+        planId: String, // documentId
+        title: String,
+        content: String,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        authorUid: String
+    ): Result<Unit> {
+        val dateStr = date.format(DateTimeFormatter.ISO_DATE)
+        return try {
+            db.collection("trips")
+                .document(tripId)
+                .collection("schedules")
+                .document(dateStr)
+                .collection("plans")
+                .document(planId)
+                .update(
+                    mapOf(
+                        "title" to title,
+                        "content" to content,
+                        "start_time" to startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        "end_time" to endTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        "author_uid" to authorUid
+                    )
+                ).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
+    suspend fun deleteSchedulePlan(
+        tripId: String,
+        date: LocalDate,
+        planId: String
+    ): Result<Unit> {
+        val dateStr = date.format(DateTimeFormatter.ISO_DATE)
+        return try {
+            db.collection("trips")
+                .document(tripId)
+                .collection("schedules")
+                .document(dateStr)
+                .collection("plans")
+                .document(planId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
 }
