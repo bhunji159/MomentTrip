@@ -1,12 +1,16 @@
 package com.example.momenttrip.repository
 
+import android.util.Log
 import com.example.momenttrip.data.Trip
+import com.example.momenttrip.data.model.CheckListItem
+import com.example.momenttrip.data.model.SchedulePlan
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -22,24 +26,46 @@ object TripRepository {
         countries: List<String>
     ): Result<String> {
         return try {
+            // 1. Trip 객체 생성
             val trip = Trip(
                 owner_uid = ownerUid,
                 title = title,
-                start_date = Timestamp(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond, 0),
-                end_date = Timestamp(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond, 0),
+                start_date = Timestamp(
+                    startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                        .toEpochMilli() / 1000, 0
+                ),
+                end_date = Timestamp(
+                    endDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() / 1000,
+                    0
+                ),
                 countries = countries,
                 participants = listOf(ownerUid),
                 created_at = Timestamp.now()
             )
-            val docRef = db.collection("trips").add(trip).await()
-            createSchedules(docRef.id, startDate, endDate)
-            Result.success(docRef.id)
+
+            // 2. trips 컬렉션에 추가
+            val tripRef = db.collection("trips").add(trip).await()
+
+            // 3. 하위 schedules, expenses, reviews 서브컬렉션 생성
+            createSchedules(tripRef.id, startDate, endDate)
+
+            // 4. users/{uid}/current_trip_id 업데이트
+            db.collection("users")
+                .document(ownerUid)
+                .update("current_trip_id", tripRef.id)
+                .await()
+
+            // 5. tripId 반환
+            Result.success(tripRef.id)
+
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+
     //날짜 별로 문서 생성
+
     private suspend fun createSchedules(tripId: String, start: LocalDate, end: LocalDate) {
         val formatter = DateTimeFormatter.ISO_DATE
         val baseRef = db.collection("trips").document(tripId)
@@ -48,7 +74,8 @@ object TripRepository {
         val reviewsRef = baseRef.collection("reviews")
         val batch = db.batch()
 
-        val dates = generateSequence(start) { if (it < end) it.plusDays(1) else null }.toList() + end
+        val dates =
+            generateSequence(start) { if (it < end) it.plusDays(1) else null }.toList() + end
 
         for (date in dates) {
             val dateStr = date.format(formatter)
@@ -114,6 +141,130 @@ object TripRepository {
             Result.failure(e)
         }
     }
+
+    //여행정보 가져오기
+    suspend fun getTripById(tripId: String): Trip? {
+        return try {
+            val snapshot = db.collection("trips")
+                .document(tripId)
+                .get()
+                .await()
+            Log.d("TripRepository", "Trip snapshot: ${snapshot.data}")
+            snapshot.toObject(Trip::class.java)?.copy(trip_id = tripId)
+        } catch (e: Exception) {
+            Log.d("TripRepository", "Trip snapshot: 에러")
+            null
+        }
+    }
+
+    suspend fun addSchedulePlan(
+        tripId: String,
+        date: LocalDate,
+        title: String,
+        content: String,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        authorUid: String
+    ): Result<Unit> {
+        return try {
+            val dateStr = date.format(DateTimeFormatter.ISO_DATE)
+            val plan = mapOf(
+                "title" to title,
+                "content" to content,
+                "start_time" to startTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                "end_time" to endTime.format(DateTimeFormatter.ofPattern("HH:mm")),
+                "author_uid" to authorUid,
+                "created_at" to Timestamp.now()
+            )
+            FirebaseFirestore.getInstance()
+                .collection("trips")
+                .document(tripId)
+                .collection("schedules")
+                .document(dateStr)
+                .collection("plans")
+                .add(plan)
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun getSchedulePlans(tripId: String, date: LocalDate): List<SchedulePlan> {
+        val dateStr = date.format(DateTimeFormatter.ISO_DATE)
+        return try {
+            val snapshot = db.collection("trips")
+                .document(tripId)
+                .collection("schedules")
+                .document(dateStr)
+                .collection("plans")
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { it.toObject(SchedulePlan::class.java) }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    //여행 목록 불러오기
+    suspend fun getTripsByOwner(ownerUid: String): List<Trip> {
+        return try {
+            val snapshot = db.collection("trips")
+                .whereEqualTo("owner_uid", ownerUid)
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Trip::class.java)?.copy(trip_id = doc.id)
+            }
+        } catch (e: Exception) {
+            Log.e("TripRepository", "getTripsByOwner 실패", e)
+            emptyList()
+        }
+    }
+
+    //체크리스트 함수들
+    suspend fun getChecklistItems(tripId: String): List<CheckListItem> {
+        return try {
+            val snapshot = db.collection("trips")
+                .document(tripId)
+                .collection("checklist")
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(CheckListItem::class.java)?.copy(id = doc.id)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun updateChecklistItem(tripId: String, item: CheckListItem) {
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .document(item.id)
+            .set(item)
+            .await()
+    }
+
+    suspend fun addChecklistItem(tripId: String, content: String) {
+        val item = mapOf("content" to content, "isChecked" to false)
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .add(item)
+            .await()
+    }
+
+    suspend fun deleteChecklistItem(tripId: String, itemId: String) {
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .document(itemId)
+            .delete()
+            .await()
+    }
+
 
 
 }
