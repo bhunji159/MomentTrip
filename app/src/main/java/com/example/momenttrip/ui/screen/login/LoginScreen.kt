@@ -56,7 +56,8 @@ fun LoginScreen(
             label = { Text("이메일") },
             leadingIcon = { Icon(Icons.Default.Person, contentDescription = "이메일") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -67,7 +68,8 @@ fun LoginScreen(
             label = { Text("비밀번호") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "비밀번호") },
             visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -111,8 +113,5 @@ fun LoginScreen(
             )
             Text("Google", color = Color.White, fontWeight = FontWeight.Bold)
         }
-
-
-
     }
 }

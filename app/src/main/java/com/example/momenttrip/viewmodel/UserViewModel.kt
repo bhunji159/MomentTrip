@@ -260,11 +260,24 @@ class UserViewModel : ViewModel() {
                     onError("구글 인증 실패")
                     return@launch
                 }
-                tempGoogleUser = firebaseUser
-                isGoogleSignUpPending = true
-                onSuccess()
+
+                val db = FirebaseFirestore.getInstance()
+                val userDoc = db.collection("users").document(firebaseUser.uid).get().await()
+
+                if (userDoc.exists()) {
+                    // 기존 가입자 - 추가 입력 필요 없음
+                    tempGoogleUser = null
+                    isGoogleSignUpPending = false
+                    onSuccess()
+                } else {
+                    // 신규 가입자 - 추가 입력 필요
+                    tempGoogleUser = firebaseUser
+                    isGoogleSignUpPending = true
+                    onSuccess()
+                }
             } catch (e: Exception) {
                 onError(e.message)
+                Log.e("login","${e.message}")
             }
         }
     }

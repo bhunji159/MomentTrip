@@ -17,6 +17,7 @@ import com.example.momenttrip.data.LoginType
 import com.example.momenttrip.data.User
 import com.example.momenttrip.navigation.AppNavGraph
 import com.example.momenttrip.repository.UserRepository
+import com.example.momenttrip.ui.screen.loading.AppLoadingScreen
 import com.example.momenttrip.ui.screen.login.LoginScreen
 import com.example.momenttrip.ui.screen.signup.GoogleSignUpExtraScreen
 import com.example.momenttrip.ui.screen.signup.SignUpEntryPoint
@@ -71,7 +72,9 @@ fun AppEntryPoint() {
             if (idToken != null) {
                 userViewModel.signInWithGoogleForSignUp(
                     idToken,
-                    onSuccess = { /* 아무것도 안함. 추가입력 화면 분기로 넘어감 */ },
+                    onSuccess = {   if (!userViewModel.isGoogleSignUpPending) {
+                        isLoggedIn.value = true
+                    }},
                     onError = { msg -> errorMessage.value = msg ?: "구글 인증 실패" }
                 )
             } else {
@@ -243,12 +246,7 @@ fun AppEntryPoint() {
 
         // 4. 로딩 스피너
         else -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            AppLoadingScreen()
         }
     }
 
