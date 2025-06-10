@@ -14,10 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.momenttrip.ui.screen.login.LoginScreen
 import com.example.momenttrip.ui.theme.MomentTripTheme
-import com.example.momenttrip.ui_screen.ExpenseMainScreen
-import com.example.momenttrip.ui_screen.ExpenseScreen
 import com.example.momenttrip.viewmodel.CountryViewModel
-import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,22 +22,18 @@ class MainActivity : ComponentActivity() {
 //        enableEdgeToEdge()
         setContent {
             MomentTripTheme {
-//               AppEntryPoint()
-                val countryViewModel: CountryViewModel = viewModel()
-                val allCountries by countryViewModel.countries.collectAsState()
-
-                LaunchedEffect(Unit) {
-                    countryViewModel.fetchCountries()
-                }
-
-                ExpenseMainScreen(
-                    tripId = "trip_id",
-                    startDate = LocalDate.parse("2025-05-01"),
-                    endDate = LocalDate.parse("2025-05-05"),
-                    tripCountries = listOf("Switzerland", "France"),
-                    allCountries = allCountries
-                )
-
+               AppEntryPoint()
+//                val countryViewModel: CountryViewModel = viewModel()
+//                LaunchedEffect(Unit) {
+//                    countryViewModel.fetchCountries()
+//                }
+//                ExpenseMainScreen(
+//                    tripId = "trip_id",
+//                    startDate = LocalDate.parse("2025-05-01"),
+//                    endDate = LocalDate.parse("2025-05-05"),
+//                    tripCountries = listOf("Switzerland", "France"),
+//                    allCountries = allCountries
+//                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.example.momenttrip.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.momenttrip.data.CountryData
@@ -15,9 +16,19 @@ class CountryViewModel : ViewModel() {
     val isLoading: StateFlow<Boolean> = _isLoading
 
     fun fetchCountries() {
+        Log.d("CountryViewModel", "fetchCountries() 호출됨")
+
         viewModelScope.launch {
             _isLoading.value = true
-            _countries.value = CountryRepository.getAllCountries()
+
+            try {
+                val result = CountryRepository.getAllCountries()
+                Log.d("CountryViewModel", "받아온 나라 수: ${result.size}")
+                _countries.value = result
+            } catch (e: Exception) {
+                Log.e("CountryViewModel", "국가 가져오기 실패", e)
+            }
+
             _isLoading.value = false
         }
     }

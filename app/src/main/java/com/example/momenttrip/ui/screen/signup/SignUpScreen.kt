@@ -1,5 +1,6 @@
 package com.example.momenttrip.ui.screen.signup
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,14 +32,16 @@ fun SignUpScreen(
     onNameChange: (String) -> Unit,
     onNicknameChange: (String) -> Unit,
     onPhoneNumberChange: (String) -> Unit,
-    onSignUpClick: () -> Unit
+    onSignUpClick: () -> Unit,
+    onBack: () -> Unit
 ) {
+    BackHandler(onBack = onBack)
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp)
-            .verticalScroll(rememberScrollState()) // 스크롤 가능하게!
-            .imePadding(), // 키보드가 올라올 때 여백 확보
+            .verticalScroll(rememberScrollState())
+            .imePadding(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -56,6 +59,7 @@ fun SignUpScreen(
             onValueChange = onEmailChange,
             label = { Text("이메일") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         if (emailCheckMessage.isNotEmpty()) {
@@ -72,6 +76,8 @@ fun SignUpScreen(
             onValueChange = onPasswordChange,
             label = { Text("비밀번호") },
             visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -80,6 +86,9 @@ fun SignUpScreen(
             onValueChange = onConfirmPasswordChange,
             label = { Text("비밀번호 확인") },
             visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password),
+            isError = confirmPassword.isNotEmpty() && confirmPassword != password,
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -87,6 +96,7 @@ fun SignUpScreen(
             value = name,
             onValueChange = onNameChange,
             label = { Text("이름") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -94,6 +104,7 @@ fun SignUpScreen(
             value = nickname,
             onValueChange = onNicknameChange,
             label = { Text("닉네임") },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         if (nicknameCheckMessage.isNotEmpty()) {
@@ -110,6 +121,7 @@ fun SignUpScreen(
             onValueChange = onPhoneNumberChange,
             label = { Text("전화번호") },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
+            singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
         if (phoneCheckMessage.isNotEmpty()) {
@@ -127,6 +139,11 @@ fun SignUpScreen(
         ) {
             Text("회원가입")
         }
+        Button(
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("뒤로가기")
+        }
     }
 }
-

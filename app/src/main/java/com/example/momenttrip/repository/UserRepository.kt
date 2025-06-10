@@ -1,9 +1,12 @@
 package com.example.momenttrip.repository
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.momenttrip.data.LoginType
 import com.example.momenttrip.data.User
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -17,6 +20,9 @@ object UserRepository{
     suspend fun getCurrentUser(): User? {
         val uid = auth.currentUser?.uid ?: return null
         val snapshot = db.collection("users").document(uid).get().await()
+        Log.d("UserRepository", "snapshot data: ${snapshot.data}")
+        val user = snapshot.toObject(User::class.java)
+        Log.d("UserRepository", "parsed user: $user")
         return snapshot.toObject(User::class.java)?.copy(uid = uid)
     }
 
@@ -75,8 +81,13 @@ object UserRepository{
     }
 
     //로그아웃
-    fun logout() {
+    fun logout(context: Context, onDone: () -> Unit = {}) {
         FirebaseAuth.getInstance().signOut()
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+        googleSignInClient.signOut().addOnCompleteListener {
+            onDone()
+        }
     }
 
     //이메일 중복 체크
@@ -177,6 +188,53 @@ object UserRepository{
             Result.success(Unit)
         }
     }
+    //여행 종료 로직
+    suspend fun finishTrip(userId: String, tripId: String): Result<Unit> {
+        return try {
+            val userRef = db.collection("users").document(userId)
 
+            db.runTransaction { transaction ->
+                val snapshot = transaction.get(userRef)
+
+                val rawList = snapshot.get("past_trips")
+                val pastTrips = if (rawList is List<*>) {
+                    rawList.filterIsInstance<String>()
+                } else {
+                    emptyList()
+                }
+
+                if (!pastTrips.contains(tripId)) {
+                    val updatedTrips = pastTrips + tripId
+                    transaction.update(userRef, mapOf(
+                        "past_trips" to updatedTrips,
+                        "current_trip_id" to null
+                    ))
+                } else {
+                    transaction.update(userRef, "current_trip_id", null)
+                }
+            }.await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    suspend fun updateCurrentTripId(userId: String, tripId: String) {
+        db.collection("users")
+            .document(userId)
+            .update("current_trip_id", tripId)
+            .await()
+    }
+
+    suspend fun saveUserIfNotExists(user: User) {
+        val doc = db.collection("users").document(user.uid).get().await()
+        if (!doc.exists()) {
+            db.collection("users").document(user.uid).set(user).await()
+        }
+        // 이미 있으면 아무것도 안 함
+    }
+    suspend fun saveUser(user: User) {
+        db.collection("users").document(user.uid).set(user).await()
+    }
 
 }
