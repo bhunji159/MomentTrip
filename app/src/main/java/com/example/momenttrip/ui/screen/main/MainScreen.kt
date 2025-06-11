@@ -137,7 +137,8 @@ fun MainScreen(
                                 startDate = trip.start_date.toDate().toLocalDate(),
                                 endDate = trip.end_date.toDate().toLocalDate(),
                                 tripCountries = trip.countries,
-                                drawerState = drawerState
+                                drawerState = drawerState,
+                                tripViewModel = tripViewModel
                             )
                         } else {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

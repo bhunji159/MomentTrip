@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -25,11 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.momenttrip.data.CountryData
 import com.example.momenttrip.data.ExpenseEntry
 import com.example.momenttrip.ui.component.WeeklyCalendar
-import com.example.momenttrip.ui_screen.uicomponent.ExpenseAddBottomSheet
-import com.example.momenttrip.ui_screen.uicomponent.ExpenseDetailDialog
+import com.example.momenttrip.ui_screen.uicomponent.AddExpense
 import com.example.momenttrip.ui_screen.uicomponent.ExpenseViewDialog
 import com.example.momenttrip.viewmodel.CountryViewModel
 import com.example.momenttrip.viewmodel.ExpenseViewModel
@@ -46,7 +43,8 @@ fun ExpenseMainScreen(
     startDate: LocalDate,
     endDate: LocalDate,
     tripCountries: List<String>,
-    drawerState: DrawerState
+    drawerState: DrawerState,
+    tripViewModel: TripViewModel = viewModel()
 ) {
     val coroutineScope = rememberCoroutineScope()
     var selectedDate by remember { mutableStateOf(startDate) }
@@ -59,7 +57,7 @@ fun ExpenseMainScreen(
 
     var showSheet by remember { mutableStateOf(false) }
     var selectedExpense by remember { mutableStateOf<ExpenseEntry?>(null) }
-    var showEditDialog by remember { mutableStateOf(false) }
+    var editingEntry by remember { mutableStateOf<ExpenseEntry?>(null) }
 
     val context = LocalContext.current
 
@@ -74,8 +72,6 @@ fun ExpenseMainScreen(
             expenseViewModel.loadExchangeRate(context, code, "KRW")
         }
     }
-//    Log.d("currencyOptions", "$currencyOptions")
-    Log.d("currencyOptions", "$allCountries")
 
     LaunchedEffect(selectedDate) {
         expenseViewModel.loadExpenses(tripId, selectedDate.toString())
@@ -91,13 +87,11 @@ fun ExpenseMainScreen(
             title = {
                 Text(
                     "가계부",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
             },
             navigationIcon = {
-                IconButton(onClick = {
-                    coroutineScope.launch { drawerState.open() }
-                }) {
+                IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
                     Icon(Icons.Default.Menu, contentDescription = "메뉴 열기")
                 }
             },
@@ -112,13 +106,10 @@ fun ExpenseMainScreen(
 
         WeeklyCalendar(
             selectedDate = selectedDate,
-            onDateSelected = { newDate ->
-                selectedDate = newDate
-            },
+            onDateSelected = { newDate -> selectedDate = newDate },
             startDate = startDate,
             endDate = endDate
         )
-
 
         Text(
             text = "${selectedDate.year}.${selectedDate.monthValue}.${selectedDate.dayOfMonth} (DAY $dayIndex)",
@@ -130,7 +121,7 @@ fun ExpenseMainScreen(
         )
 
         Text(
-            text = "지출 내역",
+            "지출 내역",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -143,7 +134,7 @@ fun ExpenseMainScreen(
         }
 
         Text(
-            text = "총합: ${"%,.0f".format(totalAmountInKRW)} KRW",
+            "총합: ${"%,.0f".format(totalAmountInKRW)} KRW",
             modifier = Modifier.align(Alignment.CenterHorizontally),
             style = MaterialTheme.typography.bodyLarge
         )
@@ -151,20 +142,16 @@ fun ExpenseMainScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 72.dp)
-            ) {
+            LazyColumn(modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 72.dp)) {
                 items(expenses, key = { it.expense_id ?: it.hashCode() }) { entry ->
                     var offsetX by remember { mutableStateOf(0f) }
                     val maxSwipe = 250f
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                    ) {
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)) {
                         Box(
                             modifier = Modifier
                                 .matchParentSize()
@@ -174,13 +161,17 @@ fun ExpenseMainScreen(
                         ) {
                             IconButton(onClick = {
                                 entry.expense_id?.let { id ->
-                                    expenseViewModel.deleteExpense(tripId, selectedDate.toString(), id) { success, msg ->
+                                    expenseViewModel.deleteExpense(
+                                        tripId,
+                                        selectedDate.toString(),
+                                        id
+                                    ) { success, msg ->
                                         if (!success) Log.e("삭제 실패", msg ?: "")
                                     }
                                 }
                             }) {
                                 Icon(
-                                    imageVector = Icons.Default.Delete,
+                                    Icons.Default.Delete,
                                     contentDescription = "삭제",
                                     tint = MaterialTheme.colorScheme.onError
                                 )
@@ -198,7 +189,11 @@ fun ExpenseMainScreen(
                                             if (offsetX < -maxSwipe * 0.7f) {
                                                 offsetX = 0f
                                                 entry.expense_id?.let { id ->
-                                                    expenseViewModel.deleteExpense(tripId, selectedDate.toString(), id) { success, msg ->
+                                                    expenseViewModel.deleteExpense(
+                                                        tripId,
+                                                        selectedDate.toString(),
+                                                        id
+                                                    ) { success, msg ->
                                                         if (!success) Log.e("삭제 실패", msg ?: "")
                                                     }
                                                 }
@@ -207,15 +202,15 @@ fun ExpenseMainScreen(
                                             }
                                         },
                                         onHorizontalDrag = { _, delta ->
-                                            val newOffset = (offsetX + delta).coerceIn(-maxSwipe, 0f)
-                                            offsetX = newOffset
+                                            offsetX = (offsetX + delta).coerceIn(-maxSwipe, 0f)
                                         }
                                     )
                                 }
                                 .fillMaxWidth()
                         ) {
                             val rate = exchangeRate[entry.currency]
-                            val converted = if (rate != null && rate > 0) entry.amount * rate else null
+                            val converted =
+                                if (rate != null && rate > 0) entry.amount * rate else null
 
                             Row(
                                 modifier = Modifier
@@ -223,16 +218,19 @@ fun ExpenseMainScreen(
                                     .padding(horizontal = 16.dp, vertical = 12.dp)
                                     .clickable {
                                         selectedExpense = entry
-                                        showEditDialog = false
                                     },
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column {
                                     val firebaseTimestamp = entry.time
                                     val instant = firebaseTimestamp.toDate().toInstant()
-                                    val localDateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault())
-                                    val timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
-                                    val formattedTimeText = localDateTime.format(timeFormatter)
+                                    val localDateTime = java.time.LocalDateTime.ofInstant(
+                                        instant,
+                                        java.time.ZoneId.systemDefault()
+                                    )
+                                    val formattedTimeText = localDateTime.format(
+                                        java.time.format.DateTimeFormatter.ofPattern("HH:mm")
+                                    )
 
                                     Text(formattedTimeText)
                                     Text("${entry.title} [${entry.category}]")
@@ -241,9 +239,16 @@ fun ExpenseMainScreen(
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text("${entry.amount} ${entry.currency} [${entry.paymentType}]")
                                     if (converted != null) {
-                                        Text("≈ ${"%,.0f".format(converted)} KRW", style = MaterialTheme.typography.bodySmall)
+                                        Text(
+                                            "≈ ${"%,.0f".format(converted)} KRW",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
                                     } else {
-                                        Text("환율 정보 없음", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                                        Text(
+                                            "환율 정보 없음",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.error
+                                        )
                                     }
                                 }
                             }
@@ -252,77 +257,111 @@ fun ExpenseMainScreen(
                 }
             }
 
-            FloatingActionButton(
-                onClick = { showSheet = true },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
+            FloatingActionButton(onClick = {
+                editingEntry = null
+                showSheet = true
+            }, modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)) {
                 Icon(Icons.Default.Add, contentDescription = "추가")
             }
         }
     }
 
     if (showSheet) {
-        ExpenseAddBottomSheet(
-            date = selectedDate.toString(),
+        AddExpense(
+            tripId = tripId,
+            tripViewModel = tripViewModel,
+            selectedDate = selectedDate,
+            onDateChange = { selectedDate = it },
             currencyOptions = currencyOptions,
             exchangeRates = exchangeRate,
-            onDismiss = { showSheet = false },
-            onSubmit = { entry ->
-                expenseViewModel.addExpense(tripId, selectedDate.toString(), entry) { success, msg ->
-                    if (!success) Log.e("추가 실패", msg ?: "")
+            onBack = {
+                showSheet = false
+                editingEntry = null
+            },
+            onSubmit = { entry, date ->
+                val originalDate = editingEntry?.time?.toDate()
+                    ?.toInstant()?.atZone(java.time.ZoneId.systemDefault())?.toLocalDate()
+
+                if (editingEntry == null) {
+                    // ➕ 새로 추가
+                    expenseViewModel.addExpense(tripId, date.toString(), entry) { success, msg ->
+                        if (!success) Log.e("추가 실패", msg ?: "")
+                        else showSheet = false
+                    }
+                } else {
+                    val id = editingEntry!!.expense_id ?: return@AddExpense
+
+                    if (originalDate == date) {
+                        // 날짜 안 바뀐 경우: 단순 update
+                        expenseViewModel.updateExpenseFields(
+                            tripId, date.toString(), id,
+                            mapOf(
+                                "amount" to entry.amount,
+                                "title" to entry.title,
+                                "detail" to (entry.detail ?: ""),
+                                "category" to entry.category,
+                                "currency" to entry.currency,
+                                "paymentType" to entry.paymentType,
+                                "time" to entry.time
+                            )
+                        ) { success, msg ->
+                            if (!success) Log.e("수정 실패", msg ?: "")
+                            else {
+                                showSheet = false
+                                editingEntry = null
+                            }
+                        }
+                    } else {
+                        // 날짜 바뀐 경우: 삭제 후 새로 추가
+                        expenseViewModel.deleteExpense(tripId, originalDate.toString(), id) { deleteSuccess, deleteMsg ->
+                            if (!deleteSuccess) {
+                                Log.e("삭제 실패", deleteMsg ?: "")
+                                return@deleteExpense
+                            }
+
+                            expenseViewModel.addExpense(tripId, date.toString(), entry.copy(expense_id = null)) { addSuccess, addMsg ->
+                                if (!addSuccess) Log.e("추가 실패", addMsg ?: "")
+                                else {
+                                    showSheet = false
+                                    editingEntry = null
+                                    selectedDate = date
+                                    expenseViewModel.loadExpenses(tripId, date.toString())
+                                }
+                            }
+                        }
+                    }
                 }
             }
+             ,
+            editingEntry = editingEntry
         )
     }
 
     selectedExpense?.let { expense ->
-        if (showEditDialog) {
-            ExpenseDetailDialog(
-                tripId = tripId,
-                date = selectedDate.toString(),
-                entry = expense,
-                currencyOptions = currencyOptions,
-                exchangeRates = exchangeRate,
-                onDismiss = {
-                    showEditDialog = false
-                    selectedExpense = null
-                },
-                onUpdate = { updatedFields ->
-                    val id = expense.expense_id
-                    if (id != null) {
-                        expenseViewModel.updateExpenseFields(tripId, selectedDate.toString(), id, updatedFields){ success, message ->
-                            if (!success) Log.e("수정 실패", message ?: "")
-                        }
-                    } else {
-                        Log.e("수정 오류", "expense_id가 null입니다.")
-                    }
+        ExpenseViewDialog(
+            entry = expense,
+            onDismiss = { selectedExpense = null },
+            onEditClick = {
+                editingEntry = expense
+                selectedDate =
+                    expense.time.toDate().toInstant().atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate()
+                showSheet = true
+                selectedExpense = null
+            },
+            onDeleteClick = {
+                val id = expense.expense_id ?: return@ExpenseViewDialog
+                expenseViewModel.deleteExpense(
+                    tripId,
+                    selectedDate.toString(),
+                    id
+                ) { success, error ->
+                    if (success) selectedExpense = null
+                    else Log.e("삭제 실패", error ?: "알 수 없는 오류")
                 }
-            )
-        } else {
-            ExpenseViewDialog(
-                entry = expense,
-                onDismiss = { selectedExpense = null },
-                onEditClick = { showEditDialog = true },
-                onDeleteClick = {
-                    val id = expense.expense_id ?: return@ExpenseViewDialog
-                    expenseViewModel.deleteExpense(tripId, selectedDate.toString(), id) { success, error ->
-                        if (success) selectedExpense = null
-                        else Log.e("삭제 실패", error ?: "알 수 없는 오류")
-                    }
-                }
-            )
-        }
+            }
+        )
     }
-}
-
-fun generateDateRange(start: LocalDate, end: LocalDate): List<LocalDate> {
-    val dates = mutableListOf<LocalDate>()
-    var current = start
-    while (!current.isAfter(end)) {
-        dates.add(current)
-        current = current.plusDays(1)
-    }
-    return dates
 }
