@@ -15,6 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.momenttrip.ui.screen.login.LoginScreen
 import com.example.momenttrip.ui.theme.MomentTripTheme
 import com.example.momenttrip.viewmodel.CountryViewModel
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +23,11 @@ class MainActivity : ComponentActivity() {
 //        enableEdgeToEdge()
         setContent {
             MomentTripTheme {
-               AppEntryPoint()
+                val remoteConfig = FirebaseRemoteConfig.getInstance()
+                remoteConfig.setDefaultsAsync(mapOf("EXCHANGE_RATE_API_KEY" to ""))
+                remoteConfig.fetchAndActivate()
+
+                AppEntryPoint()
 //                val countryViewModel: CountryViewModel = viewModel()
 //                LaunchedEffect(Unit) {
 //                    countryViewModel.fetchCountries()
