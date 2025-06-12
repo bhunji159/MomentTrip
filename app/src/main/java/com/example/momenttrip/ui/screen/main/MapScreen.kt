@@ -4,10 +4,16 @@ import MapViewModel
 import android.Manifest
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,9 +23,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.momenttrip.ui.component.TopAppBarWithIcon
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.naver.maps.geometry.LatLng
@@ -48,6 +56,9 @@ fun MapScreen(viewModel: MapViewModel = viewModel()) {
 
     val locationSource = rememberFusedLocationSource()
 
+    // 현재 위치 상태 저장
+    val currentLocation = remember { mutableStateOf<LatLng?>(null) }
+
     // 검색된 장소를 관리하는 상태
     var query by remember { mutableStateOf("") }
 
@@ -57,39 +68,56 @@ fun MapScreen(viewModel: MapViewModel = viewModel()) {
     }
 
     // 지도 및 검색 UI
-    Box(modifier = Modifier.Companion.fillMaxSize()) {
-        Column {
-            // 검색 UI
+    Column(modifier = Modifier.fillMaxSize()) {
+        TopAppBarWithIcon(
+            title = "지도",
+            navigationIcon = Icons.Default.Menu,
+            onNavigationClick = { /* */ },
+            actionIcon = {
+                IconButton(onClick = { /* 공유 */ }) {
+                    Icon(Icons.Default.Share, contentDescription = "공유")
+                }
+            }
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 검색창
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
                 label = { Text("장소 검색") },
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
+                modifier = Modifier
+                    .weight(1f)
                     .padding(8.dp)
             )
             Button(
-                onClick = searchPlaces,
-                modifier = Modifier.Companion.padding(8.dp)
+                onClick = { viewModel.searchPlaces(query) },
+                modifier = Modifier.padding(2.dp)
             ) {
                 Text("검색")
             }
         }
-
-        NaverMap(
-            modifier = Modifier.Companion.fillMaxSize(),
-            locationSource = locationSource,
-            properties = MapProperties(locationTrackingMode = LocationTrackingMode.Follow)
+        // 지도
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            // 지도에서 검색된 장소 마커 표시
-            viewModel.searchResults.collectAsState().value.forEach { place ->
-                val lat = place.y.toDoubleOrNull()
-                val lng = place.x.toDoubleOrNull()
-                if (lat != null && lng != null) {
-                    Marker(
-                        state = MarkerState(position = LatLng(lat, lng)),
-                        captionText = place.name
-                    )
+            NaverMap(
+                locationSource = locationSource,
+                properties = MapProperties(locationTrackingMode = LocationTrackingMode.Follow)
+            ) {
+                viewModel.searchResults.collectAsState().value.forEach { place ->
+                    val lat = place.y.toDoubleOrNull()
+                    val lng = place.x.toDoubleOrNull()
+                    if (lat != null && lng != null) {
+                        Marker(
+                            state = MarkerState(position = LatLng(lat, lng)),
+                            captionText = place.name
+                        )
+                    }
                 }
             }
         }
