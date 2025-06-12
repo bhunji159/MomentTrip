@@ -1,11 +1,18 @@
 package com.example.momenttrip.repository
 
 import com.example.momenttrip.data.TripInviteEntry
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 object TripInviteRepository {
     private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     // 1. 여행 초대 전송
     suspend fun sendInvite(entry: TripInviteEntry): Result<String> {
@@ -63,5 +70,27 @@ object TripInviteRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    fun incomingInvitesFlow(): Flow<List<TripInviteEntry>> = callbackFlow {
+        val uid = auth.currentUser?.uid ?: run {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val reg = Firebase.firestore
+            .collection("trip_invites")
+            .whereEqualTo("to_uid", uid)
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val list = snap?.toObjects(TripInviteEntry::class.java) ?: emptyList()
+                trySend(list)
+            }
+
+        awaitClose { reg.remove() }
     }
 }

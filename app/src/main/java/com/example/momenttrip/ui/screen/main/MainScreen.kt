@@ -38,6 +38,7 @@ import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.data.Trip
 import com.example.momenttrip.navigation.SettingsNavGraph
 import com.example.momenttrip.ui_screen.ExpenseMainScreen
+import com.example.momenttrip.ui_screen.NotificationScreen
 import com.example.momenttrip.utils.toLocalDate
 import com.example.momenttrip.viewmodel.TripViewModel
 import kotlinx.coroutines.launch
@@ -65,8 +66,10 @@ fun MainScreen(
         remember { mutableStateOf<NavHostController?>(null) }.value
     }
 
-    val selectedDate = remember { trip?.start_date?.toDate()
-        ?.let { mutableStateOf(it.toLocalDate()) } }
+    val selectedDate = remember {
+        trip?.start_date?.toDate()
+            ?.let { mutableStateOf(it.toLocalDate()) }
+    }
 
     if (selectedDate != null) {
         LaunchedEffect(selectedDate.value) {
@@ -160,12 +163,13 @@ fun MainScreen(
                     .padding(padding)
             ) {
                 when (selectedTab.value) {
-                    "friends" -> PlaceholderScreen("친구")
+                    "friends" -> FriendScreen()
 
                     "center" -> {
                         when (centerTab) {
                             "addTrip" -> tripViewModel?.let {
-                                AddTripScreen(viewModel = it,
+                                AddTripScreen(
+                                    viewModel = it,
                                     onTripCreated = { tripId ->
                                         navController.navigate("tripMain/$tripId") {
                                             popUpTo("addTrip") { inclusive = true }
@@ -222,14 +226,20 @@ fun MainScreen(
                                 drawerState = drawerState,
                                 tripViewModel = tripViewModel
                             )
-                        } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        } ?: Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
 
-                    "diary" -> PlaceholderScreen("일기")
+                    "diary" -> ReviewScreen(
+                        tripId = " ",
+                        date = java.time.LocalDate.now()
+                    )
 
-                    "notification" -> PlaceholderScreen("알림")
+                    "notification" -> NotificationScreen()
 
                     "settings" -> settingsNavController?.let {
                         SettingsNavGraph(

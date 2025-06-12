@@ -2,10 +2,15 @@ package com.example.momenttrip.repository
 
 import com.example.momenttrip.data.FriendRequest
 import com.example.momenttrip.data.User
+import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 object FriendRepository {
@@ -209,4 +214,25 @@ object FriendRepository {
         }
     }
 
+    fun incomingRequestsFlow(): Flow<List<FriendRequest>> = callbackFlow {
+        val uid = auth.currentUser?.uid ?: run {
+            trySend(emptyList())
+            close()
+            return@callbackFlow
+        }
+
+        val reg = Firebase.firestore
+            .collection("friend_requests")
+            .whereEqualTo("to_uid", uid)
+            .addSnapshotListener { snap, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val list = snap?.toObjects(FriendRequest::class.java) ?: emptyList()
+                trySend(list)
+            }
+
+        awaitClose { reg.remove() }
+    }
 }
