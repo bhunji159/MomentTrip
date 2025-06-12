@@ -1,15 +1,21 @@
-package com.example.momenttrip.ui.screen
+package com.example.momenttrip.ui.screen.main
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -67,14 +73,17 @@ fun TripListScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                        .clickable {
-                            navController.navigate("tripMain/${trip.trip_id}")
-                        },
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable {
+                                navController.navigate("tripMain/${trip.trip_id}")
+                            }
+                    ) {
                         Text(
                             text = trip.title,
                             style = MaterialTheme.typography.titleMedium
@@ -94,12 +103,33 @@ fun TripListScreen(
                         )
                     }
 
-                    Button(
-                        onClick = {
-                            navController.navigate("checklist/${trip.trip_id}")
+                    Row {
+                        Button(
+                            onClick = {
+                                navController.navigate("checklist/${trip.trip_id}")
+                            }
+                        ) {
+                            Text("체크리스트")
                         }
-                    ) {
-                        Text("체크리스트")
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        IconButton(
+                            onClick = {
+                                viewModel.deleteTrip(trip.trip_id) { success, error ->
+                                    if (success) {
+                                        viewModel.loadTrips(userUid) // 삭제 직후 강제 리로드
+                                    } else {
+                                        println("삭제 실패: $error")
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "삭제"
+                            )
+                        }
                     }
                 }
             }

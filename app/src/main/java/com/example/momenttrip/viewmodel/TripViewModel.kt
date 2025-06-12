@@ -79,12 +79,6 @@ class TripViewModel : ViewModel() {
         _tripCreated.value = false
     }
 
-    fun deleteTrip(tripId: String, callback: (Boolean, String?) -> Unit) {
-        viewModelScope.launch {
-            val result = TripRepository.deleteTrip(tripId)
-            callback(result.isSuccess, result.exceptionOrNull()?.message)
-        }
-    }
 
     fun addSchedulePlan(
         tripId: String,

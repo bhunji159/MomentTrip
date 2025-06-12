@@ -37,7 +37,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.data.Trip
 import com.example.momenttrip.navigation.SettingsNavGraph
-import com.example.momenttrip.ui.screen.TripListScreen
 import com.example.momenttrip.ui_screen.ExpenseMainScreen
 import com.example.momenttrip.utils.toLocalDate
 import com.example.momenttrip.viewmodel.TripViewModel

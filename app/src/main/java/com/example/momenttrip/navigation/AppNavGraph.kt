@@ -18,7 +18,7 @@ import androidx.navigation.navArgument
 import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.repository.TripRepository
 import com.example.momenttrip.ui.screen.ChecklistScreen
-import com.example.momenttrip.ui.screen.TripListScreen
+import com.example.momenttrip.ui.screen.main.TripListScreen
 import com.example.momenttrip.ui.screen.addSchedule.AddScheduleScreen
 import com.example.momenttrip.ui.screen.main.AddTripScreen
 import com.example.momenttrip.ui.screen.main.MainScreen
