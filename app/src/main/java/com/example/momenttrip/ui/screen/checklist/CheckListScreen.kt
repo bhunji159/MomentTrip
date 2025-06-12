@@ -1,6 +1,5 @@
 package com.example.momenttrip.ui.screen
 
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.momenttrip.viewmodel.CheckListViewModel
@@ -46,8 +47,7 @@ fun ChecklistScreen(
 ) {
     val trip by viewModel.trip.collectAsState()
     val checklist by viewModel.items.collectAsState()
-    var newItem by remember { mutableStateOf("") } //체크리스트 항목 추가
-    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    var newItem by remember { mutableStateOf("") }
 
     LaunchedEffect(tripId) {
         viewModel.loadTrip(tripId)
@@ -94,8 +94,11 @@ fun ChecklistScreen(
                         Text("추가")
                     }
                 }
+                Spacer(modifier = Modifier.height(12.dp))
                 LazyColumn {
-                    items(checklist) { item ->
+                    items(items = checklist, key = { it.id }) { item ->
+                        var isChecked by remember(item.id, item.isChecked) { mutableStateOf(item.isChecked) }
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -104,15 +107,21 @@ fun ChecklistScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Checkbox(
-                                    checked = item.isChecked,
-                                    onCheckedChange = {
-                                        viewModel.toggleItem(tripId, item)
+                                    checked = isChecked,
+                                    onCheckedChange = { newValue ->
+                                        isChecked = newValue
+                                        viewModel.toggleItem(tripId, item.copy(isChecked = newValue))
                                     }
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(item.content)
+                                Text(
+                                    text = item.content,
+                                    style = TextStyle(
+                                        textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
+                                    )
+                                )
                             }
-                            IconButton(onClick = { //삭제 아이콘
+                            IconButton(onClick = {
                                 viewModel.deleteItem(tripId, item.id)
                             }) {
                                 Icon(
@@ -129,4 +138,3 @@ fun ChecklistScreen(
         }
     }
 }
-
