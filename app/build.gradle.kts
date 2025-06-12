@@ -52,6 +52,9 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation ("androidx.compose.material:material-icons-extended")
     implementation("com.google.firebase:firebase-config-ktx")
+    implementation("com.naver.maps:map-sdk:3.21.0")
+    implementation("io.github.fornewid:naver-map-compose:1.8.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.ktx)
@@ -68,6 +71,7 @@ dependencies {
     implementation(libs.material3)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.firebase.config.ktx)
+    implementation(libs.accompanist.permissions)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

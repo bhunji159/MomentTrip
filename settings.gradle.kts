@@ -16,6 +16,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://jitpack.io") // ✅ JitPack 추가
+        maven("https://repository.map.naver.com/archive/maven") // ✅ Naver Map 전용 저장소
     }
 }
 

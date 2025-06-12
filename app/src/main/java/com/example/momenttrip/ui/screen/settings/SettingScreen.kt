@@ -1,8 +1,19 @@
 package com.example.momenttrip.ui.screen.settings
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.momenttrip.ui.component.SettingsItem
@@ -10,7 +21,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun SettingsScreen(
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onAccountClick: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -46,7 +58,7 @@ fun SettingsScreen(
 
         Divider()
 
-        SettingsItem(title = "계정 정보", onClick = { /* TODO */ })
+        SettingsItem(title = "계정 정보", onClick = onAccountClick)
 
         SettingsItem(title = "알림 설정", onClick = { /* TODO */ })
 

@@ -1,21 +1,12 @@
 package com.example.momenttrip
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.momenttrip.ui.screen.login.LoginScreen
 import com.example.momenttrip.ui.theme.MomentTripTheme
-import com.example.momenttrip.viewmodel.CountryViewModel
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,8 +15,21 @@ class MainActivity : ComponentActivity() {
         setContent {
             MomentTripTheme {
                 val remoteConfig = FirebaseRemoteConfig.getInstance()
+
+                val configSettings = FirebaseRemoteConfigSettings.Builder()
+                    .setMinimumFetchIntervalInSeconds(0) // 매번 강제로 새로 가져오기
+                    .build()
+                remoteConfig.setConfigSettingsAsync(configSettings)
+
                 remoteConfig.setDefaultsAsync(mapOf("EXCHANGE_RATE_API_KEY" to ""))
                 remoteConfig.fetchAndActivate()
+                    .addOnCompleteListener { task ->
+                        val apiKey = remoteConfig.getString("EXCHANGE_RATE_API_KEY")
+                        Log.d("RemoteConfig", "fetch 완료. 받은 키: '$apiKey'")
+                        if (apiKey.isBlank()) {
+                            Log.w("RemoteConfig", "키가 여전히 빈 문자열입니다.")
+                        }
+                    }
 
                 AppEntryPoint()
 //                val countryViewModel: CountryViewModel = viewModel()

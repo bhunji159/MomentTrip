@@ -3,6 +3,7 @@ package com.example.momenttrip.repository
 import android.util.Log
 import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.data.Trip
+import com.example.momenttrip.data.model.CheckListItem
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -260,6 +261,65 @@ object TripRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    //여행 목록 불러오기
+    suspend fun getTripsByOwner(ownerUid: String): List<Trip> {
+        return try {
+            val snapshot = db.collection("trips")
+                .whereEqualTo("owner_uid", ownerUid)
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Trip::class.java)?.copy(trip_id = doc.id)
+            }
+        } catch (e: Exception) {
+            Log.e("TripRepository", "getTripsByOwner 실패", e)
+            emptyList()
+        }
+    }
+
+    //체크리스트 함수들
+    suspend fun getChecklistItems(tripId: String): List<CheckListItem> {
+        return try {
+            val snapshot = db.collection("trips")
+                .document(tripId)
+                .collection("checklist")
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(CheckListItem::class.java)?.copy(id = doc.id)
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    suspend fun updateChecklistItem(tripId: String, item: CheckListItem) {
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .document(item.id)
+            .set(item)
+            .await()
+    }
+
+    suspend fun addChecklistItem(tripId: String, content: String) {
+        val item = mapOf("content" to content, "isChecked" to false)
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .add(item)
+            .await()
+    }
+
+    suspend fun deleteChecklistItem(tripId: String, itemId: String) {
+        db.collection("trips")
+            .document(tripId)
+            .collection("checklist")
+            .document(itemId)
+            .delete()
+            .await()
     }
 
 }

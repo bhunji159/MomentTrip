@@ -1,65 +1,74 @@
 package com.example.momenttrip.ui.screen.main
 
-import android.util.Log
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.momenttrip.data.SchedulePlan
+import com.example.momenttrip.data.Trip
 import com.example.momenttrip.ui.component.ScheduleDetailDialog
 import com.example.momenttrip.ui.component.ScheduleList
 import com.example.momenttrip.ui.component.TopAppBarWithIcon
 import com.example.momenttrip.ui.component.WeeklyCalendar
 import com.example.momenttrip.utils.toLocalDate
-import com.example.momenttrip.viewmodel.TripViewModel
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit
 
-
 @Composable
 fun CurrentTripScreen(
-    tripViewModel: TripViewModel = viewModel(),
+    trip: Trip,
+    schedulesForDate: List<SchedulePlan>,
+    selectedDate: LocalDate,
+    onDateSelected: (LocalDate) -> Unit,
+    onDeleteSchedule: (SchedulePlan) -> Unit,
     onAddScheduleClick: () -> Unit,
     onEditScheduleClick: (SchedulePlan) -> Unit,
+    onMapClick: () -> Unit,
     drawerState: DrawerState
 ) {
-    val tripState by tripViewModel.currentTrip.collectAsState()
-    val isLoading by tripViewModel.isTripLoading.collectAsState()
-    val schedulesForDate by tripViewModel.schedulesForDate.collectAsState()
-    val selectedDate by tripViewModel.selectedDate.collectAsState()
     val now = LocalTime.now()
-
     val coroutineScope = rememberCoroutineScope()
 
     var showDetailDialog by remember { mutableStateOf(false) }
     var selectedSchedule by remember { mutableStateOf<SchedulePlan?>(null) }
-
     var deleteTarget by remember { mutableStateOf<SchedulePlan?>(null) }
+
     val firstUpcomingTime = schedulesForDate
-        .filter {
-            val start = LocalTime.parse(it.start_time)
-            start > now
-        }
-        .minByOrNull {
-            LocalTime.parse(it.start_time)
-        }
+        .filter { LocalTime.parse(it.start_time) > now }
+        .minByOrNull { LocalTime.parse(it.start_time) }
 
-    LaunchedEffect(selectedDate, tripState) {
-        tripState?.let { trip ->
-            tripViewModel.loadSchedulePlans(trip.trip_id, selectedDate)
-        }
-    }
-
+    val startDate = trip.start_date.toDate().toLocalDate()
+    val endDate = trip.end_date.toDate().toLocalDate()
+    val dayIndex = ChronoUnit.DAYS.between(startDate, selectedDate).toInt() + 1
 
     Column(
         modifier = Modifier
@@ -70,9 +79,7 @@ fun CurrentTripScreen(
             title = "여행일정",
             navigationIcon = Icons.Default.Menu,
             onNavigationClick = {
-                coroutineScope.launch {
-                    drawerState.open()
-                }
+                coroutineScope.launch { drawerState.open() }
             },
             actionIcon = {
                 IconButton(onClick = { /* 공유 */ }) {
@@ -80,102 +87,76 @@ fun CurrentTripScreen(
                 }
             }
         )
+
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            when {
-                isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            WeeklyCalendar(
+                selectedDate = selectedDate,
+                onDateSelected = onDateSelected,
+                startDate = startDate,
+                endDate = endDate
+            )
+
+            Text(
+                text = "${selectedDate.year}.${selectedDate.monthValue}.${selectedDate.dayOfMonth} (DAY $dayIndex)",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val sortedSchedules = schedulesForDate.sortedBy { LocalTime.parse(it.start_time) }
+            ScheduleList(
+                schedulesForDate = sortedSchedules,
+                firstUpcomingTime = firstUpcomingTime,
+                onDetailClick = {
+                    selectedSchedule = it
+                    showDetailDialog = true
+                },
+                onDelete = {
+                    deleteTarget = it
                 }
+            )
 
-                tripState == null -> {
-                    Text(
-                        text = "현재 여행 정보가 없습니다.",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    )
-                }
-
-                else -> {
-                    val trip = tripState!!
-                    val startDate = trip.start_date.toDate().toLocalDate()
-                    val endDate = trip.end_date.toDate().toLocalDate()
-                    val dayIndex = ChronoUnit.DAYS.between(startDate, selectedDate).toInt() + 1
-                    Log.d("CurrentTripScreen", "WeeklyCalendar 호출 selectedDate: $selectedDate")
-
-                    WeeklyCalendar(
-                        selectedDate = selectedDate,
-                        onDateSelected = { newDate ->
-                            tripViewModel.updateSelectedDate(newDate)
-                        },
-                        startDate = startDate,
-                        endDate = endDate
-                    )
-
-                    Text(
-                        text = "${selectedDate.year}.${selectedDate.monthValue}.${selectedDate.dayOfMonth} (DAY $dayIndex)",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // LazyColumn 영역 weight(1f)로 감싸서 버튼과 겹치지 않게
-                    val sortedSchedules =
-                        schedulesForDate.sortedBy { LocalTime.parse(it.start_time) }
-                    ScheduleList(
-                        schedulesForDate = sortedSchedules,
-                        firstUpcomingTime = firstUpcomingTime,
-                        onDetailClick = { schedule ->
-                            selectedSchedule = schedule
-                            showDetailDialog = true
-                        },
-                        onDelete = { plan ->
-                            deleteTarget = plan
-                        }
-                    )
-                    if (deleteTarget != null) {
-                        AlertDialog(
-                            onDismissRequest = { deleteTarget = null },
-                            title = { Text("일정 삭제") },
-                            text = { Text("정말로 이 일정을 삭제하시겠습니까?") },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        tripViewModel.deleteSchedulePlan(
-                                            schedule = deleteTarget!!,
-                                            tripId = tripState!!.trip_id,
-                                            date = selectedDate
-                                        ) { /* 필요시 토스트 등 */ }
-                                        deleteTarget = null
-                                    }
-                                ) { Text("삭제") }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = { deleteTarget = null }
-                                ) { Text("취소") }
+            if (deleteTarget != null) {
+                AlertDialog(
+                    onDismissRequest = { deleteTarget = null },
+                    title = { Text("일정 삭제") },
+                    text = { Text("정말로 이 일정을 삭제하시겠습니까?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onDeleteSchedule(deleteTarget!!)
+                                deleteTarget = null
                             }
-                        )
+                        ) { Text("삭제") }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { deleteTarget = null }
+                        ) { Text("취소") }
                     }
-                    if (showDetailDialog && selectedSchedule != null) {
-                        ScheduleDetailDialog(
-                            schedule = selectedSchedule!!,
-                            onDismiss = { showDetailDialog = false },
-                            onEditClick = {
-                                onEditScheduleClick(selectedSchedule!!)
-                                showDetailDialog = false
-                            }
-                        )
+                )
+            }
+
+            if (showDetailDialog && selectedSchedule != null) {
+                ScheduleDetailDialog(
+                    schedule = selectedSchedule!!,
+                    onDismiss = { showDetailDialog = false },
+                    onEditClick = {
+                        onEditScheduleClick(selectedSchedule!!)
+                        showDetailDialog = false
                     }
-                }
+                )
             }
         }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -184,20 +165,18 @@ fun CurrentTripScreen(
             verticalAlignment = Alignment.Bottom
         ) {
             Button(
-                onClick = { /* 지도 이동 */ },
+                onClick = onMapClick,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("지도")
             }
 
             Button(
-                onClick = { onAddScheduleClick() },
+                onClick = onAddScheduleClick,
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("+")
             }
         }
-
     }
 }
-

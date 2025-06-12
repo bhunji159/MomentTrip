@@ -45,6 +45,19 @@ class UserViewModel : ViewModel() {
         }
     }
 
+    fun setCurrentTripId(tripId: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(uid)
+                .update("current_trip_id", tripId)
+                .addOnSuccessListener {
+                    // tripId 저장 성공 후 사용자 정보 새로고침
+                    loadCurrentUser()
+                }
+        }
+    }
 
     //회원가입
     fun registerUser(

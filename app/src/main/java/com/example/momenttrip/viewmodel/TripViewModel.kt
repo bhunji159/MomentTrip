@@ -3,15 +3,12 @@ package com.example.momenttrip.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.momenttrip.data.CountryData
 import com.example.momenttrip.data.SchedulePlan
 import com.example.momenttrip.data.Trip
 import com.example.momenttrip.repository.TripRepository
 import com.example.momenttrip.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
