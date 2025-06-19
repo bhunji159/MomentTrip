@@ -50,7 +50,7 @@ class NotificationViewModel(
             reqs.map {
                 NotificationItem.FriendReq(
                     id = it.request_id!!,
-                    fromName = it.from_name,
+                    fromName  = it.from_name.ifBlank { it.from_uid },
                     createdAt = it.created_at,
                     fromUid = it.from_uid
                 )

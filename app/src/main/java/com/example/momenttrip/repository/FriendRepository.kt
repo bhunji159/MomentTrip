@@ -66,10 +66,17 @@ object FriendRepository {
                 return Result.failure(Exception("이미 친구 요청을 보냈습니다."))
             }
 
-            // 2. 요청 객체 생성
+            val me = db.collection("users").document(fromUid).get().await()
+                .toObject(User::class.java)
+            val fromName = me?.nickname?.takeIf { it.isNotBlank() }
+                ?: me?.email
+                ?: ""
+
+            // 요청 객체 생성
             val request = FriendRequest(
-                from_uid = fromUid,
-                to_uid = toUid,
+                from_uid  = fromUid,
+                from_name = fromName,          // ★ 반드시 채워 넣기
+                to_uid    = toUid,
                 created_at = Timestamp.now()
             )
 
@@ -229,7 +236,11 @@ object FriendRepository {
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
-                val list = snap?.toObjects(FriendRequest::class.java) ?: emptyList()
+                val list = snap?.documents?.mapNotNull { doc ->
+                    doc.toObject(FriendRequest::class.java)
+                        ?.copy(request_id = doc.id)       // 문서 ID 주입
+                } ?: emptyList()
+
                 trySend(list)
             }
 

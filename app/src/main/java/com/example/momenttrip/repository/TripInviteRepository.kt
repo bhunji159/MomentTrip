@@ -87,7 +87,11 @@ object TripInviteRepository {
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
-                val list = snap?.toObjects(TripInviteEntry::class.java) ?: emptyList()
+                val list = snap?.documents?.mapNotNull { doc ->
+                    doc.toObject(TripInviteEntry ::class.java)   // TripInviteEntry 로 교체
+                        ?.copy(invite_id  = doc.id)            // .copy(invite_id = doc.id)
+                } ?: emptyList()
+
                 trySend(list)
             }
 
