@@ -50,7 +50,7 @@ fun TripListScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("MomentTrip") }
+                title = { Text("여행 리스트") }
             )
         },
         floatingActionButton = {
@@ -68,67 +68,78 @@ fun TripListScreen(
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            tripList.forEach { trip ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(
+            if (tripList.isEmpty()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "+ 버튼을 눌러 여행을 추가해보세요",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            } else {
+                tripList.forEach { trip ->
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .clickable {
-                                navController.navigate("tripMain/${trip.trip_id}")
-                            }
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = trip.title,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        val startDate = trip.start_date?.toDate()
-                        val endDate = trip.end_date?.toDate()
-                        val formatted = if (startDate != null && endDate != null) {
-                            "${dateFormat.format(startDate)} ~ ${dateFormat.format(endDate)}"
-                        } else {
-                            "날짜 정보 없음"
-                        }
-
-                        Text(
-                            text = formatted,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    Row {
-                        Button(
-                            onClick = {
-                                navController.navigate("checklist/${trip.trip_id}")
-                            }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    navController.navigate("tripMain/${trip.trip_id}")
+                                }
                         ) {
-                            Text("체크리스트")
+                            Text(
+                                text = trip.title,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+
+                            val startDate = trip.start_date?.toDate()
+                            val endDate = trip.end_date?.toDate()
+                            val formatted = if (startDate != null && endDate != null) {
+                                "${dateFormat.format(startDate)} ~ ${dateFormat.format(endDate)}"
+                            } else {
+                                "날짜 정보 없음"
+                            }
+
+                            Text(
+                                text = formatted,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Row {
+                            Button(
+                                onClick = {
+                                    navController.navigate("checklist/${trip.trip_id}")
+                                }
+                            ) {
+                                Text("체크리스트")
+                            }
 
-                        IconButton(
-                            onClick = {
-                                viewModel.deleteTrip(trip.trip_id) { success, error ->
-                                    if (success) {
-                                        viewModel.loadTrips(userUid) // 삭제 직후 강제 리로드
-                                    } else {
-                                        println("삭제 실패: $error")
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            IconButton(
+                                onClick = {
+                                    viewModel.deleteTrip(trip.trip_id) { success, error ->
+                                        if (success) {
+                                            viewModel.loadTrips(userUid) // 삭제 직후 강제 리로드
+                                        } else {
+                                            println("삭제 실패: $error")
+                                        }
                                     }
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "삭제"
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "삭제"
-                            )
                         }
                     }
                 }
