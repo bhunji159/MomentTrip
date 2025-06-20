@@ -96,43 +96,43 @@ fun MapScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 검색창
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                label = { Text("장소 검색") },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(8.dp)
-            )
-            Button(
-                onClick = { viewModel.searchPlaces(query) },
-                modifier = Modifier.padding(2.dp)
-            ) {
-                Text("검색")
-            }
-        }
-        // 지도
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-        ) {
-            NaverMap(
-                locationSource = locationSource,
-                properties = MapProperties(locationTrackingMode = LocationTrackingMode.Follow)
-            ) {
-                viewModel.searchResults.collectAsState().value.forEach { place ->
-                    val lat = place.y.toDoubleOrNull()
-                    val lng = place.x.toDoubleOrNull()
-                    if (lat != null && lng != null) {
-                        Marker(
-                            state = MarkerState(position = LatLng(lat, lng)),
-                            captionText = place.name
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
+//            // 검색창
+//            OutlinedTextField(
+//                value = query,
+//                onValueChange = { query = it },
+//                label = { Text("장소 검색") },
+//                modifier = Modifier
+//                    .weight(1f)
+//                    .padding(8.dp)
+//            )
+//            Button(
+//                onClick = { viewModel.searchPlaces(query) },
+//                modifier = Modifier.padding(2.dp)
+//            ) {
+//                Text("검색")
+//            }
+//        }
+//        // 지도
+//        Box(
+//            modifier = Modifier
+//                .weight(1f)
+//                .fillMaxWidth()
+//        ) {
+//            NaverMap(
+//                locationSource = locationSource,
+//                properties = MapProperties(locationTrackingMode = LocationTrackingMode.Follow)
+//            ) {
+//                viewModel.searchResults.collectAsState().value.forEach { place ->
+//                    val lat = place.y.toDoubleOrNull()
+//                    val lng = place.x.toDoubleOrNull()
+//                    if (lat != null && lng != null) {
+//                        Marker(
+//                            state = MarkerState(position = LatLng(lat, lng)),
+//                            captionText = place.name
+//                        )
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
